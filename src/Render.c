@@ -5,10 +5,10 @@
 
 /*	Initializes the SDL windows used by the emulator.
 *	Window 0: EdBoy Emulator window. Renders Game Boy LCD contents.
-*	Window 1: VRAM BG Tiles window. Renders contents of Game Boy VRAM used for BG tiles.
+*	Window 1: VRAM Tiles window. Visually renders tiled contents of Game Boy VRAM.
 *	Returns 0 on successful full initialization. Otherwise, returns 1 on error.
 */
-int Init_Emu_Windows( SDL_Window **windows ) {
+int InitEmuWindows( SDL_Window **windows ) {
 	windows[0] = NULL;
 	windows[1] = NULL;
 
@@ -16,44 +16,48 @@ int Init_Emu_Windows( SDL_Window **windows ) {
 		"EdBoy Emulator",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
-		GB_LCD_WIDTH * ED_WINDOW_SCALE,
-		GB_LCD_HEIGHT * ED_WINDOW_SCALE,
+		GB_LCD_WIDTH,
+		GB_LCD_HEIGHT,
 		SDL_WINDOW_SHOWN
 	);
 
 	if ( windows[0] == NULL ) {
-		eprintf( "Window 0 could not be created: %s\n", SDL_GetError() );
+		eprintf( "Window 0 could not be created.\n" );
 		return 1;
 	}//end if
 
 	dprintf( "Window 0 created.\n" );
 
 	windows[1] = SDL_CreateWindow(
-		"EdBoy VRAM BG Tiles",
+		"EdBoy VRAM Tiles",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
-		GB_LCD_WIDTH * ED_WINDOW_SCALE,
-		GB_LCD_HEIGHT * ED_WINDOW_SCALE,
+		VRAM_WINDOW_WIDTH,
+		VRAM_WINDOW_HEIGHT,
 		SDL_WINDOW_SHOWN
 	);
 
 	if ( windows[0] == NULL ) {
-		eprintf( "Window 1 could not be created: %s\n", SDL_GetError() );
+		eprintf( "Window 1 could not be created.\n"  );
 		return 1;
 	}//end if
 
 	dprintf( "Window 1 created.\n" );
 
 	return 0;
-}//end function Init_Emu_Windows
+}//end function InitEmuWindows
 
 /*	Deinitializes the SDL windows used by the emulator.	*/
-void Deinit_Emu_Windows( SDL_Window **windows ) {
-	SDL_DestroyWindow( windows[0] );
-	dprintf( "Window 0 destroyed.\n" );
-
-	SDL_DestroyWindow( windows[1] );
-	dprintf( "Window 1 destroyed.\n" );
+void DeinitEmuWindows( SDL_Window **windows ) {
+	if ( windows[0] != NULL ) {
+		SDL_DestroyWindow( windows[0] );
+		dprintf( "Window 0 destroyed.\n" );
+	}//end if
+	
+	if ( windows[1] != NULL ) {
+		SDL_DestroyWindow( windows[1] );
+		dprintf( "Window 1 destroyed.\n" );
+	}//end if
 
 	return;
-}//end function Deinit_Emu_Windows
+}//end function DeinitEmuWindows
