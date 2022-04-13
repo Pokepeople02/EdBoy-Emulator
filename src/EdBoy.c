@@ -29,6 +29,7 @@ int main( int argc, char *argv[] ) {
 	bool isPressedFrameStep[8]; //Stores toggles for whether a given button on the Game Boy is to be press during a frame of frame-step mode
 	bool justPressedFrameStep[8]; //Used for debouncing input toggles for emulator key presses during frame-step mode
 	bool fsJustPressed = false; //Used for debouncing frame-step toggle
+	bool faJustPressed = false; //Used for debouncing frame-advance button
 	bool didQuit = false; //Stores whether user wishes to close the emulator
 
 	//Get ROM and Boot ROM paths
@@ -77,6 +78,11 @@ int main( int argc, char *argv[] ) {
 		return 1;
 	}//end if
 
+	//Initialize isPressed for frame skip on first frame
+	for ( int i = 0; i < 8; ++i ) {
+		isPressedFrameStep[i] = false;
+		justPressedFrameStep[i] = false;
+	}//end for
 
 	//Main loop
 	while ( !didQuit ) {
@@ -107,9 +113,9 @@ int main( int argc, char *argv[] ) {
 
 		//Perform frame as appropriate
 		if ( doFrameStep )
-			DoFrameStepFrame( currKeyStates, isPressedFrameStep, justPressedFrameStep );
+			DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
 		else
-			DoFullSpeedFrame( currKeyStates );
+			DoFullSpeedFrame( &gb, currKeyStates );
 
 		//Update emulator surface contents
 
@@ -135,7 +141,7 @@ int main( int argc, char *argv[] ) {
 *	Handles toggling frame-stepped emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame upon pressing the frame-advance key.
 */
-void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ) {
+void DoFrameStepFrame( GameBoy *gb, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
 
 	//Update frame-step control toggles
 	for ( int i = GB_UP; i < GB_SELECT; ++i ) {
@@ -152,9 +158,15 @@ void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ) 
 		else justPressed[i] = false;
 	}//end for
 
-	//Update JOYP register for input
-
-	//Do frame
+	//If frame-advance button pressed, do frame
+	if ( keyStates[CTRL_FRAMESTEP_ADVANCE] ) {
+		if ( !*faJustPressed ) {
+			dprintf( "Doing frame-stepped frame:\n\n" );
+			GB_Run_Frame( gb, isPressed );
+			*faJustPressed = true;
+		}//end if
+	}//end if
+	else *faJustPressed = false;
 
 	return;
 }//end function DoFrameStepFrame
@@ -163,16 +175,16 @@ void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ) 
 *	Handles setting emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame, then delays execution to ensure proper emulation speed.
 */
-void DoFullSpeedFrame( uint8_t *keyStates ) {
+void DoFullSpeedFrame( GameBoy *gb, uint8_t *keyStates ) {
 	bool isPressed[8]; //Stores whether a given key is pressed corresponding to a given button on the emulated Game Boy for the next frame
 
 	//Get input for next frame
 	for ( int i = GB_UP; i < GB_SELECT; ++i )
 		isPressed[i] = keyStates[CTRL_SCANCODES[i]];
 
-	//Update JOYP register for input
-
 	//Do frame
+	dprintf( "Doing full-speed frame.\n" );
+	GB_Run_Frame( gb, isPressed );
 
 	return;
 }//end function DoFullSpeedFrame

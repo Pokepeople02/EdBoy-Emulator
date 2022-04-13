@@ -126,10 +126,12 @@ extern const int CTRL_SCANCODES[]; //EdBoy.c
 int InitEmuWindows( SDL_Window **windows ); //Render.c
 void DeinitEmuWindows( SDL_Window **windows ); //Render.c
 
-void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ); //EdBoy.c
-void DoFullSpeedFrame( uint8_t *keyStates ); //EdBoy.c
+void DoFrameStepFrame( GameBoy *gb, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
+void DoFullSpeedFrame( GameBoy *gb, uint8_t *keyStates ); //EdBoy.c
 
 int GB_Init( GameBoy *gb ); //Init.c
 void GB_Deinit( GameBoy *gb ); //Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
 int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
+
+void GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c

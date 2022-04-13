@@ -298,7 +298,6 @@ void GB_Deinit( GameBoy *gb ) {
 */
 int GB_Load_Game( GameBoy *gb, char *path ) {
 	FILE *romFile = NULL; //Points to ROM file, if successfully loaded.
-	long fileSize = 0; //Size of loaded ROM file in bytes
 
 	//Allocate ROM banks
 	gb->cart.rom0 = malloc( 0x4000 );
@@ -324,43 +323,33 @@ int GB_Load_Game( GameBoy *gb, char *path ) {
 	else dprintf( "External RAM allocated.\n" );
 	gb->cart.hasExtRam = false;
 
-	//Open file and get file size
+	//Open file
 	fopen_s( &romFile, path, "rb" );
 
 	if ( romFile ) {
-		fseek( romFile, 0, SEEK_END );
-		fileSize = ftell( romFile );
-		rewind( romFile );
-
-		dprintf( "Successfully opened cartridge ROM file (0x%lX bytes).\n", fileSize );
+		dprintf( "Successfully opened cartridge ROM file.\n" );
 	}//end if
 
-	//If able to allocate, open file, and file meets min size req, load ROM contents
-	if ( romFile && fileSize >= 0x8000 ) {
+	//If able to open file and allocate, load ROM contents
+	if ( romFile ) {
 
-		//If did not read 0x4000 bytes, error during read
-		if ( fread( gb->cart.rom0, 1, 0x4000, romFile ) != 0x4000 ) {
-			eprintf( "Read error during read for ROM bank 0.\n" );
-			fclose( romFile );
-			return 1;
-		}//end if
+		//Attempt to load ROM Bank 0
+		fread( gb->cart.rom0, 1, 0x4000, romFile );
 		dprintf( "ROM Bank 0 loaded. First byte test: 0x%02X\n", gb->cart.rom0[0] );
 
-		if ( fread( gb->cart.rom1, 1, 0x4000, romFile ) != 0x4000 ) {
-			eprintf( "Read error during read for ROM bank 1.\n" );
-			fclose( romFile );
-			return 1;
+		//Attempt to load ROM Bank 1
+		if ( fread( gb->cart.rom1, 1, 0x4000, romFile ) > 0 ) {
+			dprintf( "ROM Bank 1 loaded. First byte test: 0x%02X\n", gb->cart.rom1[0] );
 		}//end if
-		dprintf( "ROM Bank 1 loaded. First byte test: 0x%02X\n", gb->cart.rom1[0] );
 
 	}//end if
 	//Else, unable to load ROM. Emulate empty cartridge slot.
 	else {
-		eprintf( "Unable to load cartridge ROM. Emulating empty cartridge slot instead.\n" );
+		eprintf( "Unable to load any cartridge ROM. Emulating empty cartridge slot instead.\n" );
 	}//end if-else
 
 	if( romFile )
 		fclose( romFile );
 
 	return 0;
-}//end 
+}//end function GB_Load_Game
