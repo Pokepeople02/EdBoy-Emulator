@@ -128,4 +128,6 @@ void DeinitEmuWindows( SDL_Window **windows ); //Render.c
 void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ); //EdBoy.c
 void DoFullSpeedFrame( uint8_t *keyStates ); //EdBoy.c
 
-void GB_Init( GameBoy *gb ); //Init.c
+int GB_Init( GameBoy *gb ); //Init.c
+void GB_Deinit( GameBoy *gb ); //Init.c
+void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c

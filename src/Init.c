@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <SDL_endian.h>
@@ -7,48 +8,115 @@
 /*	Initializes the emulated Game Boy system and allocates space for its memory.
 *	ROM Banks and external RAM for inserted cartridge is allocated in GB_Load_Game()
 *	Boot ROM memory is allocated in GB_Load_BootROM()
+*	Returns 0 if all memory allocation successful. Else, returns 1 if error arises.
 */
-void GB_Init( GameBoy *gb ) {
+int GB_Init( GameBoy *gb ) {
+	bool ableToAllocateIO = true; //Whether all I/O registers were able to be allocated.
+	bool ableToAllocateLCD = true; //Whether all LCD scanlines were able to be allocated.
+
 	//Allocate and configure WRAM
 	gb->wram = malloc( 0x2000 );
 	gb->isWRAMBlocked = false;
-	dprintf( "WRAM allocated.\n" );
+
+	if( gb->wram ) dprintf( "WRAM allocated.\n" );
+	else {
+		eprintf( "Unable to allocate WRAM.\n" );
+		return 1;
+	}//end if-else
 
 	//Allocate and configure VRAM
 	gb->vram = malloc( 0x2000 );
 	gb->isVRAMBlocked = false;
-	dprintf( "VRAM allocated.\n" );
+	if ( gb->vram ) dprintf( "VRAM allocated.\n" );
+	else {
+		eprintf( "Unable to allocate VRAM.\n" );
+		return 1;
+	}//end if-else
 
 	//Allocate and configure OAM
 	gb->cpu.ppu.oam = malloc( 0xA0 );
 	gb->cpu.ppu.isOAMBlocked = false;
-	dprintf( "OAM allocated.\n" );
+	if ( gb->cpu.ppu.oam ) dprintf( "OAM allocated.\n" );
+	else {
+		eprintf( "Unable to allocate OAM.\n" );
+		return 1;
+	}//end if-else
 
 	//Allocate and configure I/O registers
 	memset( gb->io, 0, 0x80 * sizeof( uint8_t * ) );
-	for ( int i = 0x00; i < 0x03; ++i ) 
-		gb->io[i] = malloc( 1 ); //0xFF00 - 0xFF02
-	for ( int i = 0x04; i < 0x08; ++i ) 
-		gb->io[i] = malloc( 1 ); //0xFF04 - 0xFF07
-	for ( int i = 0x10; i < 0x15; ++i ) 
-		gb->io[i] = malloc( 1 ); //0xFF10 - 0xFF14
-	for ( int i = 0x16; i < 0x27; ++i ) 
-		gb->io[i] = malloc( 1 ); //0xFF16 - 0xFF26
-	for ( int i = 0x30; i < 0x4C; ++i )
-		gb->io[i] = malloc( 1 ); //0xFF30 - 0xFF4B
-	gb->io[0x50] = malloc( 1 );	//0xFF50
-	dprintf( "I/O Registers allocated.\n" );
 
+	for ( int i = 0x00; i < 0x03; ++i ) {
+		gb->io[i] = malloc( 1 ); //0xFF00 - 0xFF02
+		if ( !( gb->io[i] ) ) {
+			ableToAllocateIO = false;
+			break;
+		}//end if
+	}//end for
+
+	for ( int i = 0x04; i < 0x08 && ableToAllocateIO; ++i ) {
+		gb->io[i] = malloc( 1 ); //0xFF04 - 0xFF07
+		if ( !( gb->io[i] ) ) {
+			ableToAllocateIO = false;
+			break;
+		}//end if
+	}//end for
+
+	for ( int i = 0x10; i < 0x15 && ableToAllocateIO; ++i ) {
+		gb->io[i] = malloc( 1 ); //0xFF10 - 0xFF14
+		if ( !( gb->io[i] ) ) {
+			ableToAllocateIO = false;
+			break;
+		}//end if
+	}//end for
+
+	for ( int i = 0x16; i < 0x27 && ableToAllocateIO; ++i ) {
+		gb->io[i] = malloc( 1 ); //0xFF16 - 0xFF26
+		if ( !( gb->io[i] ) ) {
+			ableToAllocateIO = false;
+			break;
+		}//end if
+	}//end for
+
+	for ( int i = 0x30; i < 0x4C && ableToAllocateIO; ++i ) {
+		gb->io[i] = malloc( 1 ); //0xFF30 - 0xFF4B
+		if ( !( gb->io[i] ) ) {
+			ableToAllocateIO = false;
+			break;
+		}//end if
+	}//end for
+
+	gb->io[0x50] = malloc( 1 );	//0xFF50
+	if ( !( gb->io[0x50] ) ) ableToAllocateIO = false;
+
+	if( ableToAllocateIO ) dprintf( "I/O Registers allocated.\n" );
+	else {
+		eprintf( "Unable to allocate I/O Registers.\n" );
+		return 1;
+	}//end if-else
 
 	//Allocate and configure LCD
-	for ( int i = 0; i < GB_LCD_HEIGHT; ++i )
+	for ( int i = 0; i < GB_LCD_HEIGHT; ++i ) {
 		gb->lcd[i] = malloc( GB_LCD_WIDTH );
+		if ( !( gb->lcd[i] ) ) {
+			ableToAllocateLCD = false;
+			break;
+		}//end if
+	}//end for
 	gb->lcdBlankThisFrame = true;
-	dprintf( "LCD buffer allocated.\n" );
+
+	if( ableToAllocateLCD ) dprintf( "LCD buffer allocated.\n" );
+	else {
+		eprintf( "Unable to allocate LCD scanlines.\n" );
+		return 1;
+	}//end if-else
 
 	//Allocate HRAM
 	gb->cpu.hram = malloc( 0x80 );
-	dprintf( "HRAM allocated.\n" );
+	if ( gb->cpu.hram ) dprintf( "HRAM allocated.\n" );
+	else {
+		eprintf( "Unable to allocate HRAM.\n" );
+		return 1;
+	}//end if-else
 
 	//Configure CPU registers
 	gb->cpu.af = (uint16_t *)&( gb->cpu.regs[0] );
@@ -87,5 +155,90 @@ void GB_Init( GameBoy *gb ) {
 	gb->cpu.ppu.bgFIFOTail = 0;
 	dprintf( "PPU fetcher and FIFO indices initialized.\n" );
 
-	return;
+	return 0;
 }//end function GB_Init
+
+/*	Attempts to allocate memory and load boot ROM contents from file at the supplied path.
+*	If successful:
+*		Loads memory for boot ROM from file.
+*		Sets the Boot ROM Disable register (0xFF50) to 0.
+*		Sets the Program Counter to 0x0.
+*	If unsuccessful:
+*		Sets the Boot ROM Disable register to 1.
+*		Initializes register values to their post-Boot ROM values.
+*/
+void GB_Load_BootROM( GameBoy *gb, char *path ) {
+	FILE *bootromFile = NULL; //Points to bootrom file, if successfully loaded
+	long fileSize = 0; //Size of loaded boot ROM file in bytes
+
+	//Pre-allocate boot ROM
+	gb->cpu.boot = malloc( 0x100 );
+	if ( !( gb->cpu.boot ) ) eprintf( "Unable to allocate memory for boot ROM.\n" );
+	else dprintf( "Boot ROM allocated.\n" );
+
+	fopen_s( &bootromFile, path, "rb" );
+
+	//Get file size
+	if ( bootromFile ) {
+		fseek( bootromFile, 0, SEEK_END );
+		fileSize = ftell( bootromFile );
+		rewind( bootromFile );
+
+		dprintf( "Successfully opened boot ROM file (%ld bytes).\n", fileSize );
+	}//end if
+
+	//If able to open, load bootrom and prepare for execution
+	if ( gb->cpu.boot && bootromFile && fileSize == 0x100 ) {
+
+		//Load boot ROM
+		fread( gb->cpu.boot, 1, 0x100, bootromFile );
+		dprintf( "Boot ROM loaded. First byte test: 0x%X\n", gb->cpu.boot[0] );
+
+		//Set BANK register
+		*( gb->io[0x50] ) = 0;
+		dprintf( "BANK register set to %X\n", *( gb->io[0x50] ) );
+
+		//Initialize PC register
+		gb->cpu.pc = 0x0;
+		dprintf( "PC set to %04X\n", gb->cpu.pc );
+
+	}//end if
+	//Unable to load bootrom, prepare for post-bootrom execution
+	else {
+		dprintf( "Unable to load boot ROM.\n" );
+
+		//Set BANK register
+		*( gb->io[0x50] ) = 1;
+		dprintf( "BANK register set to %X\n", *( gb->io[0x50] ) );
+
+		//Initialize registers
+		*( gb->cpu.a ) = 0x01;
+		*( gb->cpu.f ) = 0x00;
+		*( gb->cpu.b ) = 0x00;
+		*( gb->cpu.c ) = 0x13;
+		*( gb->cpu.d ) = 0x00;
+		*( gb->cpu.e ) = 0xD8;
+		*( gb->cpu.h ) = 0x01;
+		*( gb->cpu.l ) = 0x4D;
+		gb->cpu.pc = 0x0100;
+		gb->cpu.sp = 0xFFFE;
+		dprintf( "Initialized registers to post-boot ROM state.\n" );
+		dprintf( "AF: %04X, BC: %04X, DE: %04X, HL: %04X\n", 
+			*( gb->cpu.af ), *( gb->cpu.bc ), *( gb->cpu.de ), *( gb->cpu.hl ) );
+		dprintf( "PC: %04X, SP: %04X\n", gb->cpu.pc, gb->cpu.sp );
+	}//end else
+
+	//Close file
+	if ( bootromFile ) {
+		fclose( bootromFile );
+		dprintf( "Closed boot ROM file.\n" );
+	}//end if
+
+	return;
+}//end function GB_Load_BootROM
+
+/* Frees memory allocated for the emulated Game Boy system and the loaded game. */
+void GB_Deinit( GameBoy *gb ) {
+
+	return;
+}//end function GB_Deinit

@@ -32,8 +32,9 @@ int main( int argc, char *argv[] ) {
 	bool didQuit = false; //Stores whether user wishes to close the emulator
 
 	//Get ROM and Boot ROM paths
-	romPath = "";
-	bootromPath = "";
+	//TODO: Hardcoded for now
+	romPath = "./roms/tetris.gb";
+	bootromPath = "./roms/dmg_boot.bin";
 
 	//Initialize SDL
 	if ( SDL_Init( SDL_INIT_VIDEO ) ) {
@@ -54,11 +55,20 @@ int main( int argc, char *argv[] ) {
 	surfaces[1] = SDL_GetWindowSurface( windows[1] );
 
 	//Initialize Game Boy system
-	GB_Init( &gb );
+	if ( GB_Init( &gb ) ) {
+		eprintf( "Memory for emulated Game Boy system unable to be fully allocated.\n" );
+
+		GB_Deinit( &gb );
+		DeinitEmuWindows( windows );
+		SDL_Quit();
+		return 1;
+	}//end if
 
 	//Load Boot ROM
+	GB_Load_BootROM( &gb, bootromPath );
 
 	//Load Game
+
 
 	//Main loop
 	while ( !didQuit ) {
@@ -104,6 +114,7 @@ int main( int argc, char *argv[] ) {
 	}//end while
 
 	//Deinitialize Game Boy system and loaded game
+	GB_Deinit( &gb );
 
 	//Deinit windows and quit SDL
 	DeinitEmuWindows( windows );
