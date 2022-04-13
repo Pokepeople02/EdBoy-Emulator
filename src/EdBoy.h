@@ -85,6 +85,7 @@ struct GB_GamePak {
 	uint8_t *rom0; //16 KB lower addressable ROM Bank (Bank 00)
 	uint8_t *rom1; //16 KB upper addressable ROM Bank (Bank 00 ~ NN)
 	uint8_t *extram; //8 KB addressable External RAM Bank
+	bool hasExtRam; //Whether cartridge contains any external RAM
 };
 
 
@@ -131,3 +132,4 @@ void DoFullSpeedFrame( uint8_t *keyStates ); //EdBoy.c
 int GB_Init( GameBoy *gb ); //Init.c
 void GB_Deinit( GameBoy *gb ); //Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
+int GB_Load_Game( GameBoy *gb, char *path ); //Init.c

@@ -8,7 +8,7 @@
 /*	Initializes the emulated Game Boy system and allocates space for its memory.
 *	ROM Banks and external RAM for inserted cartridge is allocated in GB_Load_Game()
 *	Boot ROM memory is allocated in GB_Load_BootROM()
-*	Returns 0 if all memory allocation successful. Else, returns 1 if error arises.
+*	Returns 0 if all memory allocation successful. Else, returns 1 if unable.
 */
 int GB_Init( GameBoy *gb ) {
 	bool ableToAllocateIO = true; //Whether all I/O registers were able to be allocated.
@@ -190,7 +190,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 		fileSize = ftell( bootromFile );
 		rewind( bootromFile );
 
-		dprintf( "Successfully opened boot ROM file (%ld bytes).\n", fileSize );
+		dprintf( "Successfully opened boot ROM file (0x%lX bytes).\n", fileSize );
 	}//end if
 
 	//If able to open, load bootrom and prepare for execution
@@ -212,7 +212,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 	//Unable to load bootrom, prepare for post-bootrom execution
 	else {
 		gb->cpu.boot = NULL;
-		dprintf( "Unable to load boot ROM.\n" );
+		eprintf( "Unable to load boot ROM. Loading alternative setup.\n" );
 
 		//Set BANK register
 		*( gb->io[0x50] ) = 1;
@@ -288,3 +288,79 @@ void GB_Deinit( GameBoy *gb ) {
 
 	return;
 }//end function GB_Deinit
+
+/*	TEMPORARY IMPLEMENTATION: Lacks MBC, external RAM support of any kind
+*	Attempts to allocate memory for cartridge ROM/RAM banks and load contents from file at the supplied path.
+*	If successful, loads the first 0x4000 bytes into lower ROM bank, then the next 0x4000 bytes into upper ROM bank.
+*	If unsuccessful, leaves uninitialized data in ROM banks to emulate unconnected cartridge pins.
+*	Leaves uninitialized data for external RAM to emulate lack of external RAM.
+*	Returns 0 if all allocations successful. Else, returns 1 if unable.
+*/
+int GB_Load_Game( GameBoy *gb, char *path ) {
+	FILE *romFile = NULL; //Points to ROM file, if successfully loaded.
+	long fileSize = 0; //Size of loaded ROM file in bytes
+
+	//Allocate ROM banks
+	gb->cart.rom0 = malloc( 0x4000 );
+	if ( !( gb->cart.rom0 ) ) {
+		eprintf( "Unable to allocate memory for ROM bank 0.\n" );
+		return 1;
+	}//end if
+	else dprintf( "ROM bank 0 allocated.\n" );
+
+	gb->cart.rom1 = malloc( 0x4000 );
+	if ( !( gb->cart.rom1 ) ) {
+		eprintf( "Unable to allocate memory for ROM bank 1.\n" );
+		return 1;
+	}//end if
+	else dprintf( "ROM bank 1 allocated.\n" );
+
+	//Allocate external RAM bank
+	gb->cart.extram = malloc( 0x2000 );
+	if ( !( gb->cart.extram ) ) {
+		eprintf( "Unable to allocate memory for external RAM bank.\n" );
+		return 1;
+	}//end if
+	else dprintf( "External RAM allocated.\n" );
+	gb->cart.hasExtRam = false;
+
+	//Open file and get file size
+	fopen_s( &romFile, path, "rb" );
+
+	if ( romFile ) {
+		fseek( romFile, 0, SEEK_END );
+		fileSize = ftell( romFile );
+		rewind( romFile );
+
+		dprintf( "Successfully opened cartridge ROM file (0x%lX bytes).\n", fileSize );
+	}//end if
+
+	//If able to allocate, open file, and file meets min size req, load ROM contents
+	if ( romFile && fileSize >= 0x8000 ) {
+
+		//If did not read 0x4000 bytes, error during read
+		if ( fread( gb->cart.rom0, 1, 0x4000, romFile ) != 0x4000 ) {
+			eprintf( "Read error during read for ROM bank 0.\n" );
+			fclose( romFile );
+			return 1;
+		}//end if
+		dprintf( "ROM Bank 0 loaded. First byte test: 0x%02X\n", gb->cart.rom0[0] );
+
+		if ( fread( gb->cart.rom1, 1, 0x4000, romFile ) != 0x4000 ) {
+			eprintf( "Read error during read for ROM bank 1.\n" );
+			fclose( romFile );
+			return 1;
+		}//end if
+		dprintf( "ROM Bank 1 loaded. First byte test: 0x%02X\n", gb->cart.rom1[0] );
+
+	}//end if
+	//Else, unable to load ROM. Emulate empty cartridge slot.
+	else {
+		eprintf( "Unable to load cartridge ROM. Emulating empty cartridge slot instead.\n" );
+	}//end if-else
+
+	if( romFile )
+		fclose( romFile );
+
+	return 0;
+}//end 

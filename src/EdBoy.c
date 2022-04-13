@@ -56,7 +56,7 @@ int main( int argc, char *argv[] ) {
 
 	//Initialize Game Boy system
 	if ( GB_Init( &gb ) ) {
-		eprintf( "Memory for emulated Game Boy system unable to be fully allocated.\n" );
+		eprintf( "An error occurred during emulated Game Boy system initialization.\n" );
 
 		GB_Deinit( &gb );
 		DeinitEmuWindows( windows );
@@ -64,10 +64,18 @@ int main( int argc, char *argv[] ) {
 		return 1;
 	}//end if
 
-	//Load Boot ROM
+	//Load Boot ROM or no-boot ROM alternative setup
 	GB_Load_BootROM( &gb, bootromPath );
 
 	//Load Game
+	if ( GB_Load_Game( &gb, romPath ) ) {
+		eprintf( "An error occurred while loading the game ROM file.\n" );
+
+		GB_Deinit( &gb );
+		DeinitEmuWindows( windows );
+		SDL_Quit();
+		return 1;
+	}//end if
 
 
 	//Main loop
