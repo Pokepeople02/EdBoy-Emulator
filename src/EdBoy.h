@@ -37,7 +37,7 @@ struct GB_FIFOPixel {
 
 //Defines the state of the emulated Game Boy's PPU (Picture Processing Unit)
 struct GB_PictureProcessor {
-	uint8_t oam[0xA0]; //160 B Object Attribute Memory
+	uint8_t *oam; //160 B Object Attribute Memory
 	bool isOAMBlocked; //Whether OAM access is currently blocked
 
 	uint8_t fetcherX; //X-Coordinate of PPU Pixel Fetcher
@@ -46,8 +46,8 @@ struct GB_PictureProcessor {
 	struct GB_FIFOPixel bgFIFO[16]; //Contents of BG Pixel FIFO
 	struct GB_FIFOPixel oamFIFO[16]; //Contents of sprite/OAM Pixel FIFO
 
-	uint8_t bgFIFOTail; //Tail index of BG Pixel FIFO
-	uint8_t oamFIFOTail; //Tail index of OAM Pixel FIFO
+	uint8_t bgFIFOTail; //First free index of BG Pixel FIFO
+	uint8_t oamFIFOTail; //First free index of OAM Pixel FIFO
 };
 
 //Defines the state of the emulated Game Boy's CPU/System on a Chip
@@ -73,8 +73,11 @@ struct GB_Processor {
 
 	struct GB_PictureProcessor ppu; //Picture Processing Unit
 
-	uint8_t hram[0x7F]; //127 B High RAM
-	uint8_t ie; //Interrupt Enable register IE
+	uint8_t *boot; //256 B Boot ROM
+
+	uint8_t *hram; //128 B High RAM
+
+	uint8_t ime; //Interrupt Master Enable Flag IME
 };
 
 //Defines the state of the contents of the emulated Game Boy's cartridge slot
@@ -89,17 +92,17 @@ struct GB_GamePak {
 typedef struct GB_System {
 	struct GB_Processor cpu; //Game Boy SoC ("DMG-CPU")
 
-	uint8_t vram[0x2000]; //8 KB Video RAM
+	uint8_t *vram; //8 KB Video RAM
 	bool isVRAMBlocked; //Whether VRAM access is currently blocked
 
-	uint8_t wram[0x2000]; //8 KB Work RAM
+	uint8_t *wram; //8 KB Work RAM
 	bool isWRAMBlocked; //Whether WRAM access is currently blocked
 
 	struct GB_GamePak cart; //Game Boy cartridge slot contents
 
-	uint8_t *ioReg[0x80]; //Game Boy memory-mapped I/O registers
+	uint8_t *io[0x80]; //Game Boy memory-mapped I/O registers
 
-	uint8_t lcd[GB_LCD_HEIGHT][GB_LCD_WIDTH]; //160 x 144 LCD screen.
+	uint8_t *lcd[GB_LCD_HEIGHT]; //160 x 144 LCD screen. Contains pointers to scanlines.
 	bool lcdBlankThisFrame; //Whether LCD should not render drawn pixels during this frame
 } GameBoy;
 
@@ -121,5 +124,8 @@ extern const int CTRL_SCANCODES[]; //EdBoy.c
 /*	Function Prototypes	*/
 int InitEmuWindows( SDL_Window **windows ); //Render.c
 void DeinitEmuWindows( SDL_Window **windows ); //Render.c
+
 void DoFrameStepFrame( uint8_t *keyStates, bool *isPressed, bool *justPressed ); //EdBoy.c
 void DoFullSpeedFrame( uint8_t *keyStates ); //EdBoy.c
+
+void GB_Init( GameBoy *gb ); //Init.c

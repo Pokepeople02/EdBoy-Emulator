@@ -18,6 +18,9 @@ const int CTRL_SCANCODES[] = {
 };
 
 int main( int argc, char *argv[] ) {
+	GameBoy gb; //Contains the total state of the emulated Game Boy system
+	char *romPath; //File system path to the Game Boy ROM to be loaded
+	char *bootromPath; //File system path to the Game Boy Boot ROM to be used
 	SDL_Window *windows[2]; //Stores ptrs to SDL window structures. [0] = main emulator, [1] = VRAM BG Tiles
 	SDL_Surface *surfaces[2]; //Stores ptrs to final SDL window surfaces.
 	SDL_Event event; //SDL Event handler for closing windows and keyboard input
@@ -27,6 +30,10 @@ int main( int argc, char *argv[] ) {
 	bool justPressedFrameStep[8]; //Used for debouncing input toggles for emulator key presses during frame-step mode
 	bool fsJustPressed = false; //Used for debouncing frame-step toggle
 	bool didQuit = false; //Stores whether user wishes to close the emulator
+
+	//Get ROM and Boot ROM paths
+	romPath = "";
+	bootromPath = "";
 
 	//Initialize SDL
 	if ( SDL_Init( SDL_INIT_VIDEO ) ) {
@@ -47,6 +54,7 @@ int main( int argc, char *argv[] ) {
 	surfaces[1] = SDL_GetWindowSurface( windows[1] );
 
 	//Initialize Game Boy system
+	GB_Init( &gb );
 
 	//Load Boot ROM
 
