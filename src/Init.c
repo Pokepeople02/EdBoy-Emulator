@@ -95,6 +95,7 @@ int GB_Init( GameBoy *gb ) {
 	}//end if-else
 
 	//Allocate and configure LCD
+	memset( gb->lcd, 0, GB_LCD_HEIGHT * sizeof( uint8_t * ) );
 	for ( int i = 0; i < GB_LCD_HEIGHT; ++i ) {
 		gb->lcd[i] = malloc( GB_LCD_WIDTH );
 		if ( !( gb->lcd[i] ) ) {
@@ -155,6 +156,11 @@ int GB_Init( GameBoy *gb ) {
 	gb->cpu.ppu.bgFIFOTail = 0;
 	dprintf( "PPU fetcher and FIFO indices initialized.\n" );
 
+	//Set unloaded cartridge ROM/RAM banks to NULL
+	gb->cart.rom0 = NULL;
+	gb->cart.rom1 = NULL;
+	gb->cart.extram = NULL;
+
 	return 0;
 }//end function GB_Init
 
@@ -205,6 +211,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 	}//end if
 	//Unable to load bootrom, prepare for post-bootrom execution
 	else {
+		gb->cpu.boot = NULL;
 		dprintf( "Unable to load boot ROM.\n" );
 
 		//Set BANK register
@@ -223,8 +230,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 		gb->cpu.pc = 0x0100;
 		gb->cpu.sp = 0xFFFE;
 		dprintf( "Initialized registers to post-boot ROM state.\n" );
-		dprintf( "AF: %04X, BC: %04X, DE: %04X, HL: %04X\n", 
-			*( gb->cpu.af ), *( gb->cpu.bc ), *( gb->cpu.de ), *( gb->cpu.hl ) );
+		dprintf( "AF: %04X, BC: %04X, DE: %04X, HL: %04X\n", *( gb->cpu.af ), *( gb->cpu.bc ), *( gb->cpu.de ), *( gb->cpu.hl ) );
 		dprintf( "PC: %04X, SP: %04X\n", gb->cpu.pc, gb->cpu.sp );
 	}//end else
 
@@ -239,6 +245,46 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 
 /* Frees memory allocated for the emulated Game Boy system and the loaded game. */
 void GB_Deinit( GameBoy *gb ) {
+	//Free WRAM
+	free( gb->wram );
+	dprintf( "Freed WRAM.\n" );
+
+	//Free VRAM
+	free( gb->vram );
+	dprintf( "Freed VRAM.\n" );
+
+	//Free OAM
+	free( gb->cpu.ppu.oam );
+	dprintf( "Freed OAM.\n" );
+
+	//Free IO Registers
+	for ( int i = 0; i < 0x80; ++i )
+		if ( gb->io[i] ) free( gb->io[i] );
+	dprintf( "Freed IO Registers, if allocated.\n" );
+
+	//Free LCD
+	for ( int i = 0; i < GB_LCD_HEIGHT; ++i )
+		if ( gb->lcd[i] ) free( gb->lcd[i] );
+	dprintf( "Freed LCD scanlines, if allocated.\n" );
+
+	//Free HRAM
+	free( gb->cpu.hram );
+	dprintf( "Freed HRAM.\n" );
+
+	//Free Boot ROM
+	if ( gb->cpu.boot ) free( gb->cpu.boot );
+	dprintf( "Freed Boot ROM, if allocated.\n" );
+
+	//Free ROM banks
+	if ( gb->cart.rom0 ) free( gb->cart.rom0 );
+	dprintf( "Freed lower ROM bank, if allocated.\n" );
+
+	if ( gb->cart.rom1 ) free( gb->cart.rom1 );
+	dprintf( "Freed upper ROM bank, if allocated.\n" );
+
+	//Free external RAM
+	if ( gb->cart.extram ) free( gb->cart.extram );
+	dprintf( "Freed external RAM, if allocated.\n" );
 
 	return;
 }//end function GB_Deinit
