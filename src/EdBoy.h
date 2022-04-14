@@ -7,6 +7,7 @@
 /*	Game Boy Constants	*/
 #define GB_LCD_HEIGHT 144 //Game Boy LCD screen pixel height
 #define GB_LCD_WIDTH 160 //Game Boy LCD screen pixel width
+#define GB_DOTS_PER_SCANLINE 456 //Number of PPU dots per Game Boy LCD scanline
 
 /*	Emulator Constants	*/
 #define VRAM_WINDOW_HEIGHT 128 //Unscaled VRAM display window pixel width (24 tiles wide * 8 px per tile)

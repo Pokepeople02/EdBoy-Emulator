@@ -61,7 +61,7 @@ int GB_Init( GameBoy *gb ) {
 		}//end if
 	}//end for
 
-	for ( int i = 0x10; i < 0x15 && ableToAllocateIO; ++i ) {
+	for ( int i = 0x0F; i < 0x15 && ableToAllocateIO; ++i ) {
 		gb->io[i] = malloc( 1 ); //0xFF10 - 0xFF14
 		if ( !( gb->io[i] ) ) {
 			ableToAllocateIO = false;
@@ -156,6 +156,9 @@ int GB_Init( GameBoy *gb ) {
 	gb->cpu.ppu.bgFIFOTail = 0;
 	dprintf( "PPU fetcher and FIFO indices initialized.\n" );
 
+	//Configure I/O Registers
+	gb->cpu.hram[0x7F] = 0x00; //IE
+
 	//Set unloaded cartridge ROM/RAM banks to NULL
 	gb->cart.rom0 = NULL;
 	gb->cart.rom1 = NULL;
@@ -214,11 +217,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 		gb->cpu.boot = NULL;
 		eprintf( "Unable to load boot ROM. Loading alternative setup.\n" );
 
-		//Set BANK register
-		*( gb->io[0x50] ) = 1;
-		dprintf( "BANK register set to %X\n", *( gb->io[0x50] ) );
-
-		//Initialize registers
+		//Initialize CPU registers
 		*( gb->cpu.a ) = 0x01;
 		*( gb->cpu.f ) = 0x00;
 		*( gb->cpu.b ) = 0x00;
@@ -229,9 +228,32 @@ void GB_Load_BootROM( GameBoy *gb, char *path ) {
 		*( gb->cpu.l ) = 0x4D;
 		gb->cpu.pc = 0x0100;
 		gb->cpu.sp = 0xFFFE;
-		dprintf( "Initialized registers to post-boot ROM state.\n" );
-		dprintf( "AF: %04X, BC: %04X, DE: %04X, HL: %04X\n", *( gb->cpu.af ), *( gb->cpu.bc ), *( gb->cpu.de ), *( gb->cpu.hl ) );
-		dprintf( "PC: %04X, SP: %04X\n", gb->cpu.pc, gb->cpu.sp );
+		dprintf( "Initialized CPU registers to post-boot ROM state.\n" );
+
+		//Initialize other I/O registers
+		*( gb->io[0x00] ) = 0xCF; //P1
+		*( gb->io[0x01] ) = 0x00; //SB
+		*( gb->io[0x02] ) = 0x7E; //SC
+		*( gb->io[0x04] ) = 0xAB; //DIV
+		*( gb->io[0x05] ) = 0x00; //TIMA
+		*( gb->io[0x06] ) = 0x00; //TMA
+		*( gb->io[0x07] ) = 0xF8; //TAC
+		*( gb->io[0x0F] ) = 0xE1; //IF
+		//Skipping sound registers
+		*( gb->io[0x40] ) = 0x91; //LCDC
+		*( gb->io[0x41] ) = 0x85; //STAT
+		*( gb->io[0x42] ) = 0x00; //SCY
+		*( gb->io[0x43] ) = 0x00; //SCX
+		*( gb->io[0x44] ) = 0x00; //LY
+		*( gb->io[0x45] ) = 0x00; //LYC
+		*( gb->io[0x46] ) = 0xFF; //DMA
+		*( gb->io[0x47] ) = 0xFC; //BGP
+		//OBP0 and OBP1 left uninitialized
+		*( gb->io[0x4A] ) = 0x00; //WY
+		*( gb->io[0x4B] ) = 0xFC; //WX
+		*( gb->io[0x50] ) = 0x01; //BANK
+		gb->cpu.hram[0x7F] = 0x00; //IE
+		dprintf( "Initialized I/O registers to post-boot ROM state.\n" );
 	}//end else
 
 	//Close file

@@ -161,7 +161,7 @@ void DoFrameStepFrame( GameBoy *gb, uint8_t *keyStates, bool *isPressed, bool *j
 	//If frame-advance button pressed, do frame
 	if ( keyStates[CTRL_FRAMESTEP_ADVANCE] ) {
 		if ( !*faJustPressed ) {
-			dprintf( "Doing frame-stepped frame:\n\n" );
+			dprintf( "\nDoing frame-stepped frame:\n" );
 			GB_Run_Frame( gb, isPressed );
 			*faJustPressed = true;
 		}//end if
