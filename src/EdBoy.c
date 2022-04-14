@@ -1,8 +1,3 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <SDL.h>
-
 #include "EdBoy.h"
 
 //Defines SDL keyscan codes for keyboard keys linked to Game Boy buttons
@@ -19,6 +14,7 @@ const int CTRL_SCANCODES[] = {
 
 int main( int argc, char *argv[] ) {
 	GameBoy gb; //Contains the total state of the emulated Game Boy system
+	int cycleOverflow = 0; //The number of cycles the previous frame's last action took past the 70224-frame limit
 	char *romPath; //File system path to the Game Boy ROM to be loaded
 	char *bootromPath; //File system path to the Game Boy Boot ROM to be used
 	SDL_Window *windows[2]; //Stores ptrs to SDL window structures. [0] = main emulator, [1] = VRAM BG Tiles
@@ -113,9 +109,9 @@ int main( int argc, char *argv[] ) {
 
 		//Perform frame as appropriate
 		if ( doFrameStep )
-			DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
+			DoFrameStepFrame( &gb, &cycleOverflow, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
 		else
-			DoFullSpeedFrame( &gb, currKeyStates );
+			DoFullSpeedFrame( &gb, &cycleOverflow, currKeyStates );
 
 		//Update emulator surface contents
 
@@ -136,55 +132,3 @@ int main( int argc, char *argv[] ) {
 
 	return 0;
 }//end function main
-
-/*	Does frame-stepping mode logic. 
-*	Handles toggling frame-stepped emulator input for the next frame.
-*	Runs emulated Game Boy system for one frame upon pressing the frame-advance key.
-*/
-void DoFrameStepFrame( GameBoy *gb, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
-
-	//Update frame-step control toggles
-	for ( int i = GB_UP; i < GB_SELECT; ++i ) {
-		if ( keyStates[CTRL_SCANCODES[i]] ) {
-
-			if ( !justPressed[i] ) {
-				isPressed[i] = !isPressed[i];
-				justPressed[i] = true;
-
-				dprintf( "Toggled button %d for next frame to %s\n", i, isPressed[i] ? "On" : "Off" );
-			}//end if
-
-		}//end if
-		else justPressed[i] = false;
-	}//end for
-
-	//If frame-advance button pressed, do frame
-	if ( keyStates[CTRL_FRAMESTEP_ADVANCE] ) {
-		if ( !*faJustPressed ) {
-			dprintf( "\nDoing frame-stepped frame:\n" );
-			GB_Run_Frame( gb, isPressed );
-			*faJustPressed = true;
-		}//end if
-	}//end if
-	else *faJustPressed = false;
-
-	return;
-}//end function DoFrameStepFrame
-
-/*	Does full-speed mode logic.
-*	Handles setting emulator input for the next frame.
-*	Runs emulated Game Boy system for one frame, then delays execution to ensure proper emulation speed.
-*/
-void DoFullSpeedFrame( GameBoy *gb, uint8_t *keyStates ) {
-	bool isPressed[8]; //Stores whether a given key is pressed corresponding to a given button on the emulated Game Boy for the next frame
-
-	//Get input for next frame
-	for ( int i = GB_UP; i < GB_SELECT; ++i )
-		isPressed[i] = keyStates[CTRL_SCANCODES[i]];
-
-	//Do frame
-	dprintf( "Doing full-speed frame.\n" );
-	GB_Run_Frame( gb, isPressed );
-
-	return;
-}//end function DoFullSpeedFrame

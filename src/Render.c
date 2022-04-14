@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <SDL.h>
-
 #include "EdBoy.h"
 
 /*	Initializes the SDL windows used by the emulator.

@@ -2,12 +2,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <SDL.h>;
 
 /*	Game Boy Constants	*/
 #define GB_LCD_HEIGHT 144 //Game Boy LCD screen pixel height
 #define GB_LCD_WIDTH 160 //Game Boy LCD screen pixel width
 #define GB_DOTS_PER_SCANLINE 456 //Number of PPU dots per Game Boy LCD scanline
+#define GB_CYCLES_PER_FRAME 70224 //Number of CPU cycles and PPU dots in one DMG Game Boy frame
 
 /*	Emulator Constants	*/
 #define VRAM_WINDOW_HEIGHT 128 //Unscaled VRAM display window pixel width (24 tiles wide * 8 px per tile)
@@ -127,12 +129,12 @@ extern const int CTRL_SCANCODES[]; //EdBoy.c
 int InitEmuWindows( SDL_Window **windows ); //Render.c
 void DeinitEmuWindows( SDL_Window **windows ); //Render.c
 
-void DoFrameStepFrame( GameBoy *gb, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
-void DoFullSpeedFrame( GameBoy *gb, uint8_t *keyStates ); //EdBoy.c
+void DoFrameStepFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
+void DoFullSpeedFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates ); //EdBoy.c
 
 int GB_Init( GameBoy *gb ); //Init.c
 void GB_Deinit( GameBoy *gb ); //Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
 int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
 
-void GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c
+void GB_Run_Frame( GameBoy *gb, int *cycleOverflow, bool *isPressed ); //Run.c
