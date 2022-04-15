@@ -11,18 +11,8 @@ void GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
 	//Enter main frame cycle
 	for ( cycles = 0; cycles < GB_CYCLES_PER_FRAME; ) {
 
-		//Check whether LYC matches LY. If so, request LCD STAT interrupt
-
 		//Run the next instruction
 
-
-		//Update LY register when the next scanline is reached
-		if ( cycles / GB_DOTS_PER_SCANLINE > *( gb->io[0x44] ) ) {
-			*( gb->io[0x44] ) += 1;
-			dprintf( "Incremented LY. Now on scaline %d\n", *( gb->io[0x44] ) );
-		}//end if
-
-		cycles++;
 	}//end for
 
 	return;
@@ -32,7 +22,7 @@ void GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
 *	Handles toggling frame-stepped emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame upon pressing the frame-advance key.
 */
-void DoFrameStepFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
+void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
 
 	//Update frame-step control toggles
 	for ( int i = GB_UP; i < GB_SELECT; ++i ) {
@@ -53,7 +43,7 @@ void DoFrameStepFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates, bool
 	if ( keyStates[CTRL_FRAMESTEP_ADVANCE] ) {
 		if ( !*faJustPressed ) {
 			dprintf( "\nDoing frame-stepped frame:\n" );
-			GB_Run_Frame( gb, cycleOverflow, isPressed );
+			GB_Run_Frame( gb, isPressed );
 			*faJustPressed = true;
 		}//end if
 	}//end if
@@ -66,7 +56,7 @@ void DoFrameStepFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates, bool
 *	Handles setting emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame, then delays execution to ensure proper emulation speed.
 */
-void DoFullSpeedFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates ) {
+void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
 	bool isPressed[8]; //Stores whether a given key is pressed corresponding to a given button on the emulated Game Boy for the next frame
 
 	//Get input for next frame
@@ -75,7 +65,7 @@ void DoFullSpeedFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates ) {
 
 	//Do frame
 	dprintf( "Doing full-speed frame.\n" );
-	GB_Run_Frame( gb, cycleOverflow, isPressed );
+	GB_Run_Frame( gb, isPressed );
 
 	return;
 }//end function DoFullSpeedFrame

@@ -14,13 +14,12 @@ const int CTRL_SCANCODES[] = {
 
 int main( int argc, char *argv[] ) {
 	GameBoy gb; //Contains the total state of the emulated Game Boy system
-	int cycleOverflow = 0; //The number of cycles the previous frame's last action took past the 70224-frame limit
 	char *romPath; //File system path to the Game Boy ROM to be loaded
 	char *bootromPath; //File system path to the Game Boy Boot ROM to be used
 	SDL_Window *windows[2]; //Stores ptrs to SDL window structures. [0] = main emulator, [1] = VRAM BG Tiles
 	SDL_Surface *surfaces[2]; //Stores ptrs to final SDL window surfaces.
 	SDL_Event event; //SDL Event handler for closing windows and keyboard input
-	uint8_t *currKeyStates; //Stores current states of keyboard keys
+	const uint8_t *currKeyStates; //Stores current states of keyboard keys
 	bool doFrameStep = true; //Toggles whether emulator is run in real time or frame step mode.
 	bool isPressedFrameStep[8]; //Stores toggles for whether a given button on the Game Boy is to be press during a frame of frame-step mode
 	bool justPressedFrameStep[8]; //Used for debouncing input toggles for emulator key presses during frame-step mode
@@ -109,9 +108,9 @@ int main( int argc, char *argv[] ) {
 
 		//Perform frame as appropriate
 		if ( doFrameStep )
-			DoFrameStepFrame( &gb, &cycleOverflow, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
+			DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
 		else
-			DoFullSpeedFrame( &gb, &cycleOverflow, currKeyStates );
+			DoFullSpeedFrame( &gb, currKeyStates );
 
 		//Update emulator surface contents
 

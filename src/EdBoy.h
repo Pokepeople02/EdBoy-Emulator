@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <SDL.h>;
+#include <SDL.h>
 
 /*	Game Boy Constants	*/
 #define GB_LCD_HEIGHT 144 //Game Boy LCD screen pixel height
@@ -88,7 +88,6 @@ struct GB_GamePak {
 	uint8_t *rom0; //16 KB lower addressable ROM Bank (Bank 00)
 	uint8_t *rom1; //16 KB upper addressable ROM Bank (Bank 00 ~ NN)
 	uint8_t *extram; //8 KB addressable External RAM Bank
-	bool hasExtRam; //Whether cartridge contains any external RAM
 };
 
 
@@ -129,12 +128,12 @@ extern const int CTRL_SCANCODES[]; //EdBoy.c
 int InitEmuWindows( SDL_Window **windows ); //Render.c
 void DeinitEmuWindows( SDL_Window **windows ); //Render.c
 
-void DoFrameStepFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
-void DoFullSpeedFrame( GameBoy *gb, int *cycleOverflow, uint8_t *keyStates ); //EdBoy.c
+void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
+void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ); //EdBoy.c
 
 int GB_Init( GameBoy *gb ); //Init.c
 void GB_Deinit( GameBoy *gb ); //Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
 int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
 
-void GB_Run_Frame( GameBoy *gb, int *cycleOverflow, bool *isPressed ); //Run.c
+void GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c

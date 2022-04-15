@@ -320,30 +320,6 @@ void GB_Deinit( GameBoy *gb ) {
 int GB_Load_Game( GameBoy *gb, char *path ) {
 	FILE *romFile = NULL; //Points to ROM file, if successfully loaded.
 
-	//Allocate ROM banks
-	gb->cart.rom0 = malloc( 0x4000 );
-	if ( !( gb->cart.rom0 ) ) {
-		eprintf( "Unable to allocate memory for ROM bank 0.\n" );
-		return 1;
-	}//end if
-	else dprintf( "ROM bank 0 allocated.\n" );
-
-	gb->cart.rom1 = malloc( 0x4000 );
-	if ( !( gb->cart.rom1 ) ) {
-		eprintf( "Unable to allocate memory for ROM bank 1.\n" );
-		return 1;
-	}//end if
-	else dprintf( "ROM bank 1 allocated.\n" );
-
-	//Allocate external RAM bank
-	gb->cart.extram = malloc( 0x2000 );
-	if ( !( gb->cart.extram ) ) {
-		eprintf( "Unable to allocate memory for external RAM bank.\n" );
-		return 1;
-	}//end if
-	else dprintf( "External RAM allocated.\n" );
-	gb->cart.hasExtRam = false;
-
 	//Open file
 	fopen_s( &romFile, path, "rb" );
 
@@ -354,6 +330,25 @@ int GB_Load_Game( GameBoy *gb, char *path ) {
 	//If able to open file and allocate, load ROM contents
 	if ( romFile ) {
 
+		//Allocate ROM banks
+		gb->cart.rom0 = malloc( 0x4000 );
+		if ( !( gb->cart.rom0 ) ) {
+			eprintf( "Unable to allocate memory for ROM bank 0.\n" );
+
+			fclose( romFile );
+			return 1;
+		}//end if
+		else dprintf( "ROM bank 0 allocated.\n" );
+
+		gb->cart.rom1 = malloc( 0x4000 );
+		if ( !( gb->cart.rom1 ) ) {
+			eprintf( "Unable to allocate memory for ROM bank 1.\n" );
+
+			fclose( romFile );
+			return 1;
+		}//end if
+		else dprintf( "ROM bank 1 allocated.\n" );
+
 		//Attempt to load ROM Bank 0
 		fread( gb->cart.rom0, 1, 0x4000, romFile );
 		dprintf( "ROM Bank 0 loaded. First byte test: 0x%02X\n", gb->cart.rom0[0] );
@@ -363,10 +358,17 @@ int GB_Load_Game( GameBoy *gb, char *path ) {
 			dprintf( "ROM Bank 1 loaded. First byte test: 0x%02X\n", gb->cart.rom1[0] );
 		}//end if
 
+		//Disable external RAM
+		gb->cart.extram = NULL;
 	}//end if
 	//Else, unable to load ROM. Emulate empty cartridge slot.
 	else {
 		eprintf( "Unable to load any cartridge ROM. Emulating empty cartridge slot instead.\n" );
+		
+		//Disable ROM banks and external RAM
+		gb->cart.rom0 = NULL;
+		gb->cart.rom1 = NULL;
+		gb->cart.extram = NULL;
 	}//end if-else
 
 	if( romFile )
