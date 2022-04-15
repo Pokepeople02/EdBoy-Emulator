@@ -41,6 +41,11 @@ int GB_Init( GameBoy *gb ) {
 		return 1;
 	}//end if-else
 
+	//Configure cartridge ROM/RAM blocks
+	gb->cart.isROM0Blocked = false;
+	gb->cart.isROM1Blocked = false;
+	gb->cart.isExtRAMBlocked = false;
+
 	//Allocate and configure I/O registers
 	memset( gb->io, 0, 0x80 * sizeof( uint8_t * ) );
 

@@ -86,10 +86,14 @@ struct GB_Processor {
 //Defines the state of the contents of the emulated Game Boy's cartridge slot
 struct GB_GamePak {
 	uint8_t *rom0; //16 KB lower addressable ROM Bank (Bank 00)
-	uint8_t *rom1; //16 KB upper addressable ROM Bank (Bank 00 ~ NN)
-	uint8_t *extram; //8 KB addressable External RAM Bank
-};
+	bool isROM0Blocked; //Whether lower ROM bank is currently blocked
 
+	uint8_t *rom1; //16 KB upper addressable ROM Bank (Bank 00 ~ NN)
+	bool isROM1Blocked; //Whether upper ROM bank is currently blocked
+
+	uint8_t *extram; //8 KB addressable external RAM Bank
+	bool isExtRAMBlocked; //Whether external RAM bank is currently blocked
+};
 
 //Defines the total state of the emulated Game Boy system
 typedef struct GB_System {
@@ -128,12 +132,16 @@ extern const int CTRL_SCANCODES[]; //EdBoy.c
 int InitEmuWindows( SDL_Window **windows ); //Render.c
 void DeinitEmuWindows( SDL_Window **windows ); //Render.c
 
-void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //EdBoy.c
-void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ); //EdBoy.c
-
 int GB_Init( GameBoy *gb ); //Init.c
 void GB_Deinit( GameBoy *gb ); //Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
 int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
 
+void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
+void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
 void GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c
+
+void GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ); //CPU.c
+uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ); //CPU.c
+uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ); //CPU.c
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles );

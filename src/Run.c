@@ -2,16 +2,15 @@
 
 /* Runs the emulated Game Boy system for one frame. */
 void GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
-	unsigned cycles; //The number of cycles that have been run this frame
-
-	//Initialize LY for this frame
-	*( gb->io[0x44] ) = 0;
-	dprintf( "Initializing LY to %X\n", *( gb->io[0x44] ) );
+	unsigned cycles = 0; //The number of cycles that have been run this frame
 
 	//Enter main frame cycle
-	for ( cycles = 0; cycles < GB_CYCLES_PER_FRAME; ) {
+	while ( cycles < GB_CYCLES_PER_FRAME ) {
 
-		//Run the next instruction
+		//Handle next unhandled interrupt, if one exists
+
+		//Decode and run the next instruction
+		GB_Decode_Execute( gb, &cycles, isPressed );
 
 	}//end for
 
