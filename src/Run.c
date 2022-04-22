@@ -1,27 +1,15 @@
+#include <SDL.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "EdBoy.h"
-
-/* Runs the emulated Game Boy system for one frame. Returns true if user quit application prematurely via mid-frame pause on unknown opcode. */
-bool GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
-	unsigned cycles = 0; //The number of cycles that have been run this frame
-
-	//Enter main frame cycle
-	while ( cycles < GB_CYCLES_PER_FRAME ) {
-
-		//Handle next unhandled interrupt, if one exists
-
-		//Decode and run the next instruction, and quit prematurely if user requested quit during unknown-opcode-pause.
-		if( GB_Decode_Execute( gb, &cycles, isPressed ) ) return true;
-	}//end for
-
-	return false;
-}//end function GB_Run_Frame
 
 /*	Does frame-stepping mode logic.
 *	Handles toggling frame-stepped emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame upon pressing the frame-advance key.
 *	Returns true if termination requested prematurely mid-frame. Otherwise, returns false.
 */
-bool DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
+bool Do_FrameStep_Frame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
 
 	//Update frame-step control toggles
 	for ( int i = GB_UP; i < GB_SELECT; ++i ) {
@@ -49,14 +37,14 @@ bool DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, b
 	else *faJustPressed = false;
 
 	return false;
-}//end function DoFrameStepFrame
+}//end function Do_FrameStep_Frame
 
 /*	Does full-speed mode logic.
 *	Handles setting emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame, then delays execution to ensure proper emulation speed.
 *	Returns true if termination requested prematurely mid-frame. Otherwise, returns false.
 */
-bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
+bool Do_FullSpeed_Frame( GameBoy *gb, const uint8_t *keyStates ) {
 	bool isPressed[8]; //Stores whether a given key is pressed corresponding to a given button on the emulated Game Boy for the next frame
 
 	//Get input for next frame
@@ -68,7 +56,7 @@ bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
 	if( GB_Run_Frame( gb, isPressed ) ) return true;
 
 	return false;
-}//end function DoFullSpeedFrame
+}//end function Do_FullSpeed_Frame
 
 /*	Pauses mid-frame and waits for the frame-advance key to be pressed.
 *	Does not accept other input, including closing the application windows.
@@ -102,4 +90,4 @@ bool Pause_On_Unknown_Opcode() {
 	}//end while
 
 	return false;
-}//end function Emergency_Pause
+}//end function Pause_On_Unknown_Opcode

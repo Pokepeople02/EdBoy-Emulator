@@ -1,5 +1,45 @@
+#include <stdbool.h>
+#include <stdint.h>
 
-#include "EdBoy.h"
+#include "../EdBoy.h"
+
+/* Runs the emulated Game Boy system for one frame. Returns true if user quit application prematurely via mid-frame pause on unknown opcode. */
+bool GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
+	unsigned cycles = 0; //The number of cycles that have been run this frame
+
+	//Enter main frame cycle
+	while ( cycles < GB_CYCLES_PER_FRAME ) {
+
+		//Handle next unhandled interrupt, if one exists
+
+		//Decode and run the next instruction, and quit prematurely if user requested quit during unknown-opcode-pause.
+		if ( GB_Decode_Execute( gb, &cycles, isPressed ) ) return true;
+	}//end for
+
+	return false;
+}//end function GB_Run_Frame
+
+/*	Increments the count of T-State cycles performed this frame
+*	Initiates behaviors that occur every T-State or every set number of T-State cycles, such as:
+*		Incrementing the LY register,
+*		Comparing the LY and LYC registers,
+*		Incrementing the DIV register,
+*		Incrementing the TIMA register,
+*		Progressing on an in-progress DMA Transfer
+*	Also initiates the PPU to tick for one dot every T-State.
+*/
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ) {
+
+	//For every T-State to progress by:
+	for ( unsigned i = 0; i < incCycles; ++i ) {
+
+	}//end for
+
+	//Increment cycles
+	*( cyclesSoFar ) += incCycles;
+
+	return;
+}//end function GB_Increment_Cycles_This_Frame
 
 /*	Decodes the next instruction at the current PC and calls the appropriate instruction function.
 *	Passes number of T-States executed this frame to children function that would consume cycles to execute.
@@ -144,25 +184,3 @@ uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ) {
 
 	return 0x0;
 }//end function GB_Read
-
-/*	Increments the count of T-State cycles performed this frame
-*	Initiates behaviors that occur every T-State or every set number of T-State cycles, such as:
-*		Incrementing the LY register,
-*		Comparing the LY and LYC registers,
-*		Incrementing the DIV register,
-*		Incrementing the TIMA register, 
-*		Progressing on an in-progress DMA Transfer
-*	Also initiates the PPU to tick for one dot every T-State.
-*/
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ) {
-
-	//For every T-State to progress by:
-	for ( unsigned i = 0; i < incCycles; ++i ) {
-
-	}//end for
-
-	//Increment cycles
-	*( cyclesSoFar ) += incCycles;
-
-	return;
-}//end function GB_Increment_Cycles_This_Frame

@@ -1,3 +1,7 @@
+#include <stdbool.h>
+#include <stdint.h>
+#include <SDL.h>
+
 #include "EdBoy.h"
 
 //Defines SDL keyscan codes for keyboard keys linked to Game Boy buttons
@@ -39,7 +43,7 @@ int main( int argc, char *argv[] ) {
 	}//end if
 
 	//Initialize windows
-	if ( InitEmuWindows( windows ) ) { 
+	if ( Init_Emulator_Windows( windows ) ) { 
 		eprintf( "Unable to initialize emulator windows: %s\n", SDL_GetError() );
 
 		SDL_Quit();
@@ -55,7 +59,7 @@ int main( int argc, char *argv[] ) {
 		eprintf( "An error occurred during emulated Game Boy system initialization.\n" );
 
 		GB_Deinit( &gb );
-		DeinitEmuWindows( windows );
+		Deinit_Emulator_Windows( windows );
 		SDL_Quit();
 		return 1;
 	}//end if
@@ -68,7 +72,7 @@ int main( int argc, char *argv[] ) {
 		eprintf( "An error occurred while loading the game ROM file.\n" );
 
 		GB_Deinit( &gb );
-		DeinitEmuWindows( windows );
+		Deinit_Emulator_Windows( windows );
 		SDL_Quit();
 		return 1;
 	}//end if
@@ -108,10 +112,10 @@ int main( int argc, char *argv[] ) {
 
 		//Perform frame as appropriate, check for mid-frame request for quit
 		if ( doFrameStep ) {
-			if ( DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed ) ) didQuit = true;
+			if ( Do_FrameStep_Frame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed ) ) didQuit = true;
 		}//end if
 		else {
-			if ( DoFullSpeedFrame( &gb, currKeyStates ) ) didQuit = true;
+			if ( Do_FullSpeed_Frame( &gb, currKeyStates ) ) didQuit = true;
 		}//end if-else
 
 		//Update emulator surface contents
@@ -128,7 +132,7 @@ int main( int argc, char *argv[] ) {
 	GB_Deinit( &gb );
 
 	//Deinit windows and quit SDL
-	DeinitEmuWindows( windows );
+	Deinit_Emulator_Windows( windows );
 	SDL_Quit();
 
 	return 0;

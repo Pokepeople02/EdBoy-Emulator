@@ -1,3 +1,5 @@
+#include <SDL.h>
+
 #include "EdBoy.h"
 
 /*	Initializes the SDL windows used by the emulator.
@@ -5,7 +7,7 @@
 *	Window 1: VRAM Tiles window. Visually renders tiled contents of Game Boy VRAM.
 *	Returns 0 on successful full initialization. Otherwise, returns 1 on error.
 */
-int InitEmuWindows( SDL_Window **windows ) {
+int Init_Emulator_Windows( SDL_Window **windows ) {
 	windows[0] = NULL;
 	windows[1] = NULL;
 
@@ -45,7 +47,7 @@ int InitEmuWindows( SDL_Window **windows ) {
 }//end function InitEmuWindows
 
 /*	Deinitializes the SDL windows used by the emulator.	*/
-void DeinitEmuWindows( SDL_Window **windows ) {
+void Deinit_Emulator_Windows( SDL_Window **windows ) {
 	if ( windows[0] != NULL ) {
 		SDL_DestroyWindow( windows[0] );
 		dprintf( "Window 0 destroyed.\n" );

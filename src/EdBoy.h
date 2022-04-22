@@ -1,9 +1,9 @@
 #pragma once
 
+#include <SDL.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <SDL.h>
 
 /*	Game Boy Constants	*/
 #define GB_LCD_HEIGHT 144 //Game Boy LCD screen pixel height
@@ -129,20 +129,21 @@ enum GameBoyButtonID {
 extern const int CTRL_SCANCODES[]; //EdBoy.c
 
 /*	Function Prototypes	*/
-int InitEmuWindows( SDL_Window **windows ); //Render.c
-void DeinitEmuWindows( SDL_Window **windows ); //Render.c
+int Init_Emulator_Windows( SDL_Window **windows ); //Window.c
+void Deinit_Emulator_Windows( SDL_Window **windows ); //Window.c
 
-int GB_Init( GameBoy *gb ); //Init.c
-void GB_Deinit( GameBoy *gb ); //Init.c
-void GB_Load_BootROM( GameBoy *gb, char *path ); //Init.c
-int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
-
-bool DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
-bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
-bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c
+bool Do_FrameStep_Frame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
+bool Do_FullSpeed_Frame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
 bool Pause_On_Unknown_Opcode(); //Run.c
 
-bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ); //CPU.c
-uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ); //CPU.c
-uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ); //CPU.c
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ); //CPU.c
+int GB_Init( GameBoy *gb ); //GameBoy/Init.c
+void GB_Deinit( GameBoy *gb ); //GameBoy/Init.c
+
+void GB_Load_BootROM( GameBoy *gb, char *path ); //GameBoy/Load.c
+int GB_Load_Game( GameBoy *gb, char *path ); //GameBoy/Load.c
+
+bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //GameBoy/CPU.c
+bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ); //GameBoy/CPU.c
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ); //GameBoy/CPU.c
+uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ); //GameBoy/CPU.c
+uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ); //GameBoy/CPU.c
