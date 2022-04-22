@@ -75,7 +75,7 @@ bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
 *	Meant for temporary testing only.
 *	Returns true if request was made to abort program via closing window mid-pause. Otherwise, returns false.
 */
-bool Temporary_Pause() {
+bool Pause_On_Unknown_Opcode() {
 	SDL_Event tempEvent; //Temporary pause event handler
 	const uint8_t *currKeyStates; //Current keyboard key states during pause
 	bool didContinue = false; //Set to true when user wants to continue executing frame

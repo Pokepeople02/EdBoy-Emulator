@@ -18,7 +18,7 @@ bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 		switch ( opcode ) {
 		default: 
 			eprintf( "Unknown or unimplemented opcode 0x%02X\n", opcode );
-			didQuitMidPause = Temporary_Pause();
+			didQuitMidPause = Pause_On_Unknown_Opcode();
 		}//end switch
 	}//end if
 
@@ -29,7 +29,7 @@ bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 		switch ( opcode ) {
 		default:
 			eprintf( "Unknown or unimplemented opcode 0xCB%02X\n", opcode );
-			didQuitMidPause = Temporary_Pause();
+			didQuitMidPause = Pause_On_Unknown_Opcode();
 		}//end switch
 	}//end if-else
 

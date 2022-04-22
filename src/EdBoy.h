@@ -140,7 +140,7 @@ int GB_Load_Game( GameBoy *gb, char *path ); //Init.c
 bool DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
 bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
 bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //Run.c
-bool Temporary_Pause(); //Run.c
+bool Pause_On_Unknown_Opcode(); //Run.c
 
 bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ); //CPU.c
 uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ); //CPU.c
