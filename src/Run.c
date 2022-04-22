@@ -1,7 +1,7 @@
 #include "EdBoy.h"
 
-/* Runs the emulated Game Boy system for one frame. */
-void GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
+/* Runs the emulated Game Boy system for one frame. Returns true if user quit application prematurely via mid-frame pause on unknown opcode. */
+bool GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
 	unsigned cycles = 0; //The number of cycles that have been run this frame
 
 	//Enter main frame cycle
@@ -9,19 +9,19 @@ void GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
 
 		//Handle next unhandled interrupt, if one exists
 
-		//Decode and run the next instruction
-		GB_Decode_Execute( gb, &cycles, isPressed );
-
+		//Decode and run the next instruction, and quit prematurely if user requested quit during unknown-opcode-pause.
+		if( GB_Decode_Execute( gb, &cycles, isPressed ) ) return true;
 	}//end for
 
-	return;
+	return false;
 }//end function GB_Run_Frame
 
 /*	Does frame-stepping mode logic.
 *	Handles toggling frame-stepped emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame upon pressing the frame-advance key.
+*	Returns true if termination requested prematurely mid-frame. Otherwise, returns false.
 */
-void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
+bool DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ) {
 
 	//Update frame-step control toggles
 	for ( int i = GB_UP; i < GB_SELECT; ++i ) {
@@ -42,20 +42,21 @@ void DoFrameStepFrame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, b
 	if ( keyStates[CTRL_FRAMESTEP_ADVANCE] ) {
 		if ( !*faJustPressed ) {
 			dprintf( "\nDoing frame-stepped frame:\n" );
-			GB_Run_Frame( gb, isPressed );
+			if ( GB_Run_Frame( gb, isPressed ) ) return true;
 			*faJustPressed = true;
 		}//end if
 	}//end if
 	else *faJustPressed = false;
 
-	return;
+	return false;
 }//end function DoFrameStepFrame
 
 /*	Does full-speed mode logic.
 *	Handles setting emulator input for the next frame.
 *	Runs emulated Game Boy system for one frame, then delays execution to ensure proper emulation speed.
+*	Returns true if termination requested prematurely mid-frame. Otherwise, returns false.
 */
-void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
+bool DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
 	bool isPressed[8]; //Stores whether a given key is pressed corresponding to a given button on the emulated Game Boy for the next frame
 
 	//Get input for next frame
@@ -64,7 +65,41 @@ void DoFullSpeedFrame( GameBoy *gb, const uint8_t *keyStates ) {
 
 	//Do frame
 	dprintf( "Doing full-speed frame.\n" );
-	GB_Run_Frame( gb, isPressed );
+	if( GB_Run_Frame( gb, isPressed ) ) return true;
 
-	return;
+	return false;
 }//end function DoFullSpeedFrame
+
+/*	Pauses mid-frame and waits for the frame-advance key to be pressed.
+*	Does not accept other input, including closing the application windows.
+*	Meant for temporary testing only.
+*	Returns true if request was made to abort program via closing window mid-pause. Otherwise, returns false.
+*/
+bool Temporary_Pause() {
+	SDL_Event tempEvent; //Temporary pause event handler
+	const uint8_t *currKeyStates; //Current keyboard key states during pause
+	bool didContinue = false; //Set to true when user wants to continue executing frame
+	bool alreadyPressing = false; //Whether the frame-advance key is already being pressed. Prevents premature advancing
+
+	//Check status of frame-advance key
+	currKeyStates = SDL_GetKeyboardState( NULL );
+	if ( currKeyStates[CTRL_FRAMESTEP_ADVANCE] ) alreadyPressing = true;
+
+	//Loop with no logging until told to break
+	while ( !didContinue ) {
+
+		//Poll for quit events until event queue is empty or told to quit mid-pause
+		while ( SDL_PollEvent( &tempEvent ) )
+			if ( tempEvent.type == SDL_WINDOWEVENT && tempEvent.window.event == SDL_WINDOWEVENT_CLOSE )
+				return true;
+
+		//Get state of keyboard
+		currKeyStates = SDL_GetKeyboardState( NULL );
+
+		//Update alreadyPressing if no longer pressing frame-advance key, and otherwise check if is now pressing frame-advance key
+		if ( currKeyStates[CTRL_FRAMESTEP_ADVANCE] && !alreadyPressing ) didContinue = true;
+		else if ( !currKeyStates[CTRL_FRAMESTEP_ADVANCE] && alreadyPressing ) alreadyPressing = false;
+	}//end while
+
+	return false;
+}//end function Emergency_Pause

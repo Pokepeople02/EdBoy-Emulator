@@ -4,9 +4,11 @@
 /*	Decodes the next instruction at the current PC and calls the appropriate instruction function.
 *	Passes number of T-States executed this frame to children function that would consume cycles to execute.
 *	Passes Game Boy joypad buttons pressed this frame to children functions that could write to I/O registers for potential JOYP register update.
-*	Notifies user via console upon encountering unknown or unimplemented opcode.
+*	Notifies user via console and temporarily pauses execution upon encountering unknown or unimplemented opcode.
+*	Returns true if unknown opcode encountered and user quits mid-pause by closing emulator window. Otherwise, returns false.
 */
-void GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
+bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
+	bool didQuitMidPause = false; //Whether user requested to quit mid-pause upon pausing execution for unknown opcode.
 	uint8_t opcode; //The opcode of the encoded instruction
 
 	opcode = GB_Get_Next_Byte( gb, cycles );
@@ -16,6 +18,7 @@ void GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 		switch ( opcode ) {
 		default: 
 			eprintf( "Unknown or unimplemented opcode 0x%02X\n", opcode );
+			didQuitMidPause = Temporary_Pause();
 		}//end switch
 	}//end if
 
@@ -26,10 +29,11 @@ void GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 		switch ( opcode ) {
 		default:
 			eprintf( "Unknown or unimplemented opcode 0xCB%02X\n", opcode );
+			didQuitMidPause = Temporary_Pause();
 		}//end switch
 	}//end if-else
 
-	return;
+	return didQuitMidPause;
 }//end function GB_Decode_Execute
 
 /*	Reads and returns the byte at the current program counter, then iterates the program counter.

@@ -106,11 +106,13 @@ int main( int argc, char *argv[] ) {
 		}//end if
 		else fsJustPressed = false;
 
-		//Perform frame as appropriate
-		if ( doFrameStep )
-			DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed );
-		else
-			DoFullSpeedFrame( &gb, currKeyStates );
+		//Perform frame as appropriate, check for mid-frame request for quit
+		if ( doFrameStep ) {
+			if ( DoFrameStepFrame( &gb, currKeyStates, isPressedFrameStep, justPressedFrameStep, &faJustPressed ) ) didQuit = true;
+		}//end if
+		else {
+			if ( DoFullSpeedFrame( &gb, currKeyStates ) ) didQuit = true;
+		}//end if-else
 
 		//Update emulator surface contents
 
