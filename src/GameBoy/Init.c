@@ -163,7 +163,14 @@ int GB_Init( GameBoy *gb ) {
 	dprintf( "PPU fetcher and FIFO indices initialized.\n" );
 
 	//Configure I/O Registers
+	*( gb->io[0x04] ) = 0x00; //DIV
+	*( gb->io[0x05] ) = 0x00; //TIMA
+	*( gb->io[0x07] ) = 0x00; //TAC
 	gb->cpu.hram[0x7F] = 0x00; //IE
+
+	//Configure I/O Register helper values
+	gb->cyclesNextDIV = 255;
+	gb->cyclesNextTIMA = 0;
 
 	//Set unloaded cartridge ROM/RAM banks to NULL
 	gb->cart.rom0 = NULL;

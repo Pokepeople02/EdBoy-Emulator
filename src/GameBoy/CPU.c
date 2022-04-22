@@ -33,10 +33,66 @@ void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigne
 	//For every T-State to progress by:
 	for ( unsigned i = 0; i < incCycles; ++i ) {
 
-	}//end for
+		//Increment LY register every 456 cycles
+		if ( *cyclesSoFar / GB_DOTS_PER_SCANLINE > *( gb->io[0x44] ) ) {
+			*( gb->io[0x44] ) = (*( gb->io[0x44] ) + 1) % GB_SCANLINES_PER_FRAME;
+			dprintf( "LY register now %d\n", *( gb->io[0x44] ) );
+		}//end if
 
-	//Increment cycles
-	*( cyclesSoFar ) += incCycles;
+		//Compare LY and LYC registers. If equal and enabled, request LCD STAT interrupt
+		if ( *( gb->io[0x44] ) == *( gb->io[0x45] ) ) {
+			dprintf( "LY and LYC equal. Requesting LCD STAT interrupt\n" );
+			//TODO Request LCD STAT interrupt
+		}//end if
+
+		//Increment DIV register every 256 cycles
+		if ( *cyclesSoFar == gb->cyclesNextDIV ) {
+			*( gb->io[0x04] ) += 1;
+			gb->cyclesNextDIV = ( *cyclesSoFar + 256 ) % GB_CYCLES_PER_FRAME;
+			dprintf( "DIV register now %d\n", *( gb->io[0x04] ) );
+		}//end if
+
+		//Increment TIMA register according to TAC register
+		if ( ( *( gb->io[0x07] ) & 0x04 ) && ( *cyclesSoFar == gb->cyclesNextTIMA ) ) {
+			*( gb->io[0x05] ) += 1;
+			dprintf( "TIMA register now %d\n", *( gb->io[0x05] ) );
+
+			//If TIMA overflow, reset to TMA and request Timer interrupt
+			if ( *( gb->io[0x05] ) == 0 ) {
+				dprintf( "TIMA overflow. Requesting Timer interrupt\n" );
+				//TODO Request Timer interrupt
+
+				//Reset TIMA to TMA value
+				*( gb->io[0x05] ) = *( gb->io[0x06] );
+				dprintf( "TIMA reset to %d\n", *( gb->io[0x05] ) );
+			}//end if
+
+			//Update cyclesNextTIMA to know when to increment next
+			gb->cyclesNextTIMA = *cyclesSoFar;
+			switch ( *( gb->io[0x07] ) & 0x03 ) {
+			case 00 : //In 1024 cycles
+				gb->cyclesNextTIMA += 1024;
+				break;
+			case 01 : //In 16 cycles
+				gb->cyclesNextTIMA += 16;
+				break;
+			case 02 : //In 64 cycles
+				gb->cyclesNextTIMA += 64;
+				break;
+			case 03 : //In 256 cycles
+				gb->cyclesNextTIMA += 256;
+				break;
+			}//end switch
+			gb->cyclesNextTIMA %= GB_CYCLES_PER_FRAME;
+
+		}//end if
+
+		//Tick PPU
+
+
+		//Increment cycles this frame
+		*cyclesSoFar += 1;
+	}//end for
 
 	return;
 }//end function GB_Increment_Cycles_This_Frame

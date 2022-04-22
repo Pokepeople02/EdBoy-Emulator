@@ -10,6 +10,7 @@
 #define GB_LCD_WIDTH 160 //Game Boy LCD screen pixel width
 #define GB_DOTS_PER_SCANLINE 456 //Number of PPU dots per Game Boy LCD scanline
 #define GB_CYCLES_PER_FRAME 70224 //Number of CPU cycles and PPU dots in one DMG Game Boy frame
+#define GB_SCANLINES_PER_FRAME 154 //Number of scanlines in one frame, including non-rendering VBlank scanlines
 
 /*	Emulator Constants	*/
 #define VRAM_WINDOW_HEIGHT 128 //Unscaled VRAM display window pixel width (24 tiles wide * 8 px per tile)
@@ -111,6 +112,9 @@ typedef struct GB_System {
 
 	uint8_t *lcd[GB_LCD_HEIGHT]; //160 x 144 LCD screen. Contains pointers to scanlines.
 	bool lcdBlankThisFrame; //Whether LCD should not render drawn pixels during this frame
+
+	unsigned cyclesNextDIV; //Cycle count upon next increment of DIV register
+	unsigned cyclesNextTIMA; //Cycle count upon next increment of TIMA register
 } GameBoy;
 
 //Defines button IDs used for Game Boy buttons. Used as indices into isPressed, CTRL_SCANCODES, etc.
