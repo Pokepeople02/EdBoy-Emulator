@@ -155,12 +155,16 @@ int GB_Init( GameBoy *gb ) {
 		dprintf( "CPU 8b register references set for Little Endian.\n" );
 	}//end if-else
 
-	//Configure PPU
+	//Configure PPU fetcher
 	gb->cpu.ppu.fetcherX = 0;
 	gb->cpu.ppu.fetcherY = 0;
 	gb->cpu.ppu.bgFIFOTail = 0;
 	gb->cpu.ppu.bgFIFOTail = 0;
 	dprintf( "PPU fetcher and FIFO indices initialized.\n" );
+
+	//Configure PPU OAM scan results buffer
+	memset( gb->cpu.ppu.oamScanResults, 0, 10 * sizeof( uint8_t * ) );
+	dprintf( "PPU OAM Scan results buffer initialized.\n" );
 
 	//Configure I/O Registers
 	*( gb->io[0x04] ) = 0x00; //DIV

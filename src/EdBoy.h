@@ -52,6 +52,8 @@ struct GB_PictureProcessor {
 
 	uint8_t bgFIFOTail; //First free index of BG Pixel FIFO
 	uint8_t oamFIFOTail; //First free index of OAM Pixel FIFO
+
+	uint8_t *oamScanResults[10]; //Pointers to sprites in OAM found during Mode 2 for the current scanline
 };
 
 //Defines the state of the emulated Game Boy's CPU/System on a Chip
