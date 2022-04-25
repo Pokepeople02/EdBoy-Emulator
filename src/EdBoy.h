@@ -100,23 +100,27 @@ struct GB_GamePak {
 
 //Defines the total state of the emulated Game Boy system
 typedef struct GB_System {
+	/* Game Boy components */
 	struct GB_Processor cpu; //Game Boy SoC ("DMG-CPU")
-
-	uint8_t *vram; //8 KB Video RAM
-	bool isVRAMBlocked; //Whether VRAM access is currently blocked
-
-	uint8_t *wram; //8 KB Work RAM
-	bool isWRAMBlocked; //Whether WRAM access is currently blocked
-
 	struct GB_GamePak cart; //Game Boy cartridge slot contents
 
+	uint8_t *vram; //8 KB Video RAM
+	uint8_t *wram; //8 KB Work RAM
 	uint8_t *io[0x80]; //Game Boy memory-mapped I/O registers
 
 	uint8_t *lcd[GB_LCD_HEIGHT]; //160 x 144 LCD screen. Contains pointers to scanlines.
+
+	/* Helper flags and variables */
+	bool isWRAMBlocked; //Whether WRAM access is currently blocked
+	bool isVRAMBlocked; //Whether VRAM access is currently blocked
+
 	bool lcdBlankThisFrame; //Whether LCD should not render drawn pixels during this frame
 
 	unsigned cyclesNextDIV; //Cycle count upon next increment of DIV register
 	unsigned cyclesNextTIMA; //Cycle count upon next increment of TIMA register
+
+	unsigned cycles; //Cycle count into current frame
+	bool isFrameOver; //Whether current frame has met or exceeded 70224 cycles
 } GameBoy;
 
 //Defines button IDs used for Game Boy buttons. Used as indices into isPressed, CTRL_SCANCODES, etc.
@@ -149,7 +153,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ); //GameBoy/Load.c
 int GB_Load_Game( GameBoy *gb, char *path ); //GameBoy/Load.c
 
 bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //GameBoy/CPU.c
-bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ); //GameBoy/CPU.c
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ); //GameBoy/CPU.c
-uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ); //GameBoy/CPU.c
-uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ); //GameBoy/CPU.c
+bool GB_Decode_Execute( GameBoy *gb, bool *isPressed ); //GameBoy/CPU.c
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ); //GameBoy/CPU.c
+uint8_t GB_Get_Next_Byte( GameBoy *gb ); //GameBoy/CPU.c
+uint8_t GB_Read( GameBoy *gb, uint16_t addr ); //GameBoy/CPU.c

@@ -170,6 +170,7 @@ int GB_Init( GameBoy *gb ) {
 	*( gb->io[0x04] ) = 0x00; //DIV
 	*( gb->io[0x05] ) = 0x00; //TIMA
 	*( gb->io[0x07] ) = 0x00; //TAC
+	*( gb->io[0x44] ) = 0x00; //LY
 	gb->cpu.hram[0x7F] = 0x00; //IE
 
 	//Configure I/O Register helper values
@@ -180,6 +181,9 @@ int GB_Init( GameBoy *gb ) {
 	gb->cart.rom0 = NULL;
 	gb->cart.rom1 = NULL;
 	gb->cart.extram = NULL;
+
+	//Initialize cycle count into current frame
+	gb->cycles = 0;
 
 	return 0;
 }//end function GB_Init

@@ -5,55 +5,56 @@
 
 /* Runs the emulated Game Boy system for one frame. Returns true if user quit application prematurely via mid-frame pause on unknown opcode. */
 bool GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
-	unsigned cycles = 0; //The number of cycles that have been run this frame
 
-	//Enter main frame cycle
-	while ( cycles < GB_CYCLES_PER_FRAME ) {
+	gb->isFrameOver = false;
+
+	//Enter main ~70224 T-State cycle
+	while ( !gb->isFrameOver ) {
 
 		//Handle next unhandled interrupt, if one exists
 
 		//Decode and run the next instruction, and quit prematurely if user requested quit during unknown-opcode-pause.
-		if ( GB_Decode_Execute( gb, &cycles, isPressed ) ) return true;
+		if ( GB_Decode_Execute( gb, isPressed ) ) return true;
+
 	}//end for
 
 	return false;
 }//end function GB_Run_Frame
 
-/*	Increments the count of T-State cycles performed this frame
-*	Initiates behaviors that occur every T-State or every set number of T-State cycles, such as:
+/*	Increments the count of T-State cycles performed this frame and performs behaviors that occur every X T-State(s), such as:
 *		Incrementing the LY register,
 *		Comparing the LY and LYC registers,
 *		Incrementing the DIV register,
 *		Incrementing the TIMA register,
 *		Progressing on an in-progress DMA Transfer
-*	Also initiates the PPU to tick for one dot every T-State.
+*		Initiating the PPU to tick for 1 dot every 1 T-State.
 */
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigned incCycles ) {
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ) {
 
 	//For every T-State to progress by:
-	for ( unsigned i = 0; i < incCycles; ++i ) {
+	for ( unsigned i = 0; i < cyclesIncrement; ++i ) {
 
 		//Increment LY register every 456 cycles
-		if ( *cyclesSoFar / GB_DOTS_PER_SCANLINE > *( gb->io[0x44] ) ) {
+		if ( gb->cycles / GB_DOTS_PER_SCANLINE > *( gb->io[0x44] ) ) {
 			*( gb->io[0x44] ) = (*( gb->io[0x44] ) + 1) % GB_SCANLINES_PER_FRAME;
 			dprintf( "LY register now %d\n", *( gb->io[0x44] ) );
 		}//end if
 
 		//Compare LY and LYC registers. If equal and enabled, request LCD STAT interrupt
 		if ( *( gb->io[0x44] ) == *( gb->io[0x45] ) ) {
-			dprintf( "LY and LYC equal. Requesting LCD STAT interrupt\n" );
+			dprintf( "LY and LYC equal at %d. Requesting LCD STAT interrupt\n", *( gb->io[0x44] ) );
 			//TODO Request LCD STAT interrupt
 		}//end if
 
 		//Increment DIV register every 256 cycles
-		if ( *cyclesSoFar == gb->cyclesNextDIV ) {
+		if ( gb->cycles == gb->cyclesNextDIV ) {
 			*( gb->io[0x04] ) += 1;
-			gb->cyclesNextDIV = ( *cyclesSoFar + 256 ) % GB_CYCLES_PER_FRAME;
+			gb->cyclesNextDIV = ( gb->cycles + 256 ) % GB_CYCLES_PER_FRAME;
 			dprintf( "DIV register now %d\n", *( gb->io[0x04] ) );
 		}//end if
 
 		//Increment TIMA register according to TAC register
-		if ( ( *( gb->io[0x07] ) & 0x04 ) && ( *cyclesSoFar == gb->cyclesNextTIMA ) ) {
+		if ( ( *( gb->io[0x07] ) & 0x04 ) && ( gb->cycles == gb->cyclesNextTIMA ) ) {
 			*( gb->io[0x05] ) += 1;
 			dprintf( "TIMA register now %d\n", *( gb->io[0x05] ) );
 
@@ -68,7 +69,7 @@ void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigne
 			}//end if
 
 			//Update cyclesNextTIMA to know when to increment next
-			gb->cyclesNextTIMA = *cyclesSoFar;
+			gb->cyclesNextTIMA = gb->cycles;
 			switch ( *( gb->io[0x07] ) & 0x03 ) {
 			case 00 : //In 1024 cycles
 				gb->cyclesNextTIMA += 1024;
@@ -87,27 +88,32 @@ void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned *cyclesSoFar, unsigne
 
 		}//end if
 
-		//Tick PPU
+		//TODO Tick PPU
 
 
 		//Increment cycles this frame
-		*cyclesSoFar += 1;
+		gb->cycles += 1;
 	}//end for
+
+	//Check for whether next instruction is part of this frame
+	if ( gb->cycles >= GB_CYCLES_PER_FRAME ) {
+		gb->isFrameOver = true;
+		gb->cycles %= GB_CYCLES_PER_FRAME;
+	}//end if
 
 	return;
 }//end function GB_Increment_Cycles_This_Frame
 
 /*	Decodes the next instruction at the current PC and calls the appropriate instruction function.
-*	Passes number of T-States executed this frame to children function that would consume cycles to execute.
 *	Passes Game Boy joypad buttons pressed this frame to children functions that could write to I/O registers for potential JOYP register update.
 *	Notifies user via console and temporarily pauses execution upon encountering unknown or unimplemented opcode.
 *	Returns true if unknown opcode encountered and user quits mid-pause by closing emulator window. Otherwise, returns false.
 */
-bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
+bool GB_Decode_Execute( GameBoy *gb, bool *isPressed ) {
 	bool didQuitMidPause = false; //Whether user requested to quit mid-pause upon pausing execution for unknown opcode.
 	uint8_t opcode; //The opcode of the encoded instruction
 
-	opcode = GB_Get_Next_Byte( gb, cycles );
+	opcode = GB_Get_Next_Byte( gb );
 
 	//If first byte not 0xCB, decode opcode as normal
 	if ( opcode != 0xCB ) {
@@ -120,7 +126,7 @@ bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 
 	//If first byte 0xCB, decode as 0xCB-prefixed opcode
 	else {
-		opcode = GB_Get_Next_Byte( gb, cycles );
+		opcode = GB_Get_Next_Byte( gb );
 
 		switch ( opcode ) {
 		default:
@@ -132,22 +138,20 @@ bool GB_Decode_Execute( GameBoy *gb, unsigned *cycles, bool *isPressed ) {
 	return didQuitMidPause;
 }//end function GB_Decode_Execute
 
-/*	Reads and returns the byte at the current program counter, then iterates the program counter.
-*	Iterates cycles as appropriate for the read.
-*/
-uint8_t GB_Get_Next_Byte( GameBoy *gb, unsigned *cycles ) {
+/*	Performs read operation and returns the byte at the current program counter, then iterates the program counter.	*/
+uint8_t GB_Get_Next_Byte( GameBoy *gb ) {
 	uint8_t nextByte; //The byte at the current program counter
 
-	nextByte = GB_Read( gb, cycles, gb->cpu.pc );
+	nextByte = GB_Read( gb, gb->cpu.pc );
 	gb->cpu.pc += 1;
 
 	return nextByte;
 }//end function GB_Get_Next_Byte
 
-/*	Reads the byte at the specified 16-bit address from the corresponding place in the emulated Game Boy's memory.
-*	Iterates cycles by 4 T-States for the read.
+/*	Performs read operation on byte at the specified 16-bit address from the corresponding place in the emulated Game Boy's memory.
+*	Iterates cycle count for current frame by 4 T-States for the read op.
 */
-uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ) {
+uint8_t GB_Read( GameBoy *gb, uint16_t addr ) {
 	uint8_t byte; //The byte read by this operation
 
 	//Boot ROM
@@ -236,7 +240,7 @@ uint8_t GB_Read( GameBoy *gb, unsigned *cycles, uint16_t addr ) {
 	}//end if-else
 
 	//Increment cycles for read
-	GB_Increment_Cycles_This_Frame(gb, cycles, 4 );
+	GB_Increment_Cycles_This_Frame(gb, 4 );
 
-	return 0x0;
+	return byte;
 }//end function GB_Read
