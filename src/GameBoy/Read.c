@@ -95,7 +95,7 @@ uint8_t GB_Read( GameBoy *gb, uint16_t addr ) {
 	}//end if-else
 
 	//Increment cycles for read
-	GB_Increment_Cycles_This_Frame( gb, 4 );
+	GB_Cycle_T_States( gb, 4 );
 
 	return byte;
 }//end function GB_Read
