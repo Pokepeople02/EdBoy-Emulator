@@ -153,7 +153,7 @@ void GB_Load_BootROM( GameBoy *gb, char *path ); //GameBoy/Load.c
 int GB_Load_Game( GameBoy *gb, char *path ); //GameBoy/Load.c
 
 bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //GameBoy/Cycle.c
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ); //GameBoy/Cycle.c
+void GB_Cycle_T_States( GameBoy *gb, unsigned cyclesIncrement ); //GameBoy/Cycle.c
 
 bool GB_Decode_Execute( GameBoy *gb, bool *isPressed ); //GameBoy/Decode.c
 

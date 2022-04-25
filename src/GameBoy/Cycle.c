@@ -28,7 +28,7 @@ bool GB_Run_Frame( GameBoy *gb, bool *isPressed ) {
 *		Progressing on an in-progress DMA Transfer
 *		Initiating the PPU to tick for 1 dot every 1 T-State.
 */
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ) {
+void GB_Cycle_T_States( GameBoy *gb, unsigned cyclesIncrement ) {
 
 	//For every T-State to progress by:
 	for ( unsigned i = 0; i < cyclesIncrement; ++i ) {
