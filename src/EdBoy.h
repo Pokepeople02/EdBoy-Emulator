@@ -144,7 +144,7 @@ void Deinit_Emulator_Windows( SDL_Window **windows ); //Window.c
 
 bool Do_FrameStep_Frame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
 bool Do_FullSpeed_Frame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
-bool Pause_On_Unknown_Opcode(); //Run.c
+bool Pause_On_Unknown_Opcode(); //Run-Emu.c
 
 int GB_Init( GameBoy *gb ); //GameBoy/Init.c
 void GB_Deinit( GameBoy *gb ); //GameBoy/Init.c
@@ -152,8 +152,10 @@ void GB_Deinit( GameBoy *gb ); //GameBoy/Init.c
 void GB_Load_BootROM( GameBoy *gb, char *path ); //GameBoy/Load.c
 int GB_Load_Game( GameBoy *gb, char *path ); //GameBoy/Load.c
 
-bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //GameBoy/CPU.c
-bool GB_Decode_Execute( GameBoy *gb, bool *isPressed ); //GameBoy/CPU.c
-void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ); //GameBoy/CPU.c
-uint8_t GB_Get_Next_Byte( GameBoy *gb ); //GameBoy/CPU.c
-uint8_t GB_Read( GameBoy *gb, uint16_t addr ); //GameBoy/CPU.c
+bool GB_Run_Frame( GameBoy *gb, bool *isPressed ); //GameBoy/Cycle.c
+void GB_Increment_Cycles_This_Frame( GameBoy *gb, unsigned cyclesIncrement ); //GameBoy/Cycle.c
+
+bool GB_Decode_Execute( GameBoy *gb, bool *isPressed ); //GameBoy/Decode.c
+
+uint8_t GB_Read( GameBoy *gb, uint16_t addr ); //GameBoy/Read.c
+uint8_t GB_Get_Next_Byte( GameBoy *gb ); //GameBoy/Read.c
