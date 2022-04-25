@@ -144,7 +144,7 @@ void Deinit_Emulator_Windows( SDL_Window **windows ); //Window.c
 
 bool Do_FrameStep_Frame( GameBoy *gb, const uint8_t *keyStates, bool *isPressed, bool *justPressed, bool *faJustPressed ); //Run.c
 bool Do_FullSpeed_Frame( GameBoy *gb, const uint8_t *keyStates ); //Run.c
-bool Pause_On_Unknown_Opcode(); //Run-Emu.c
+bool Pause_On_Unknown_Opcode(); //Run.c
 
 int GB_Init( GameBoy *gb ); //GameBoy/Init.c
 void GB_Deinit( GameBoy *gb ); //GameBoy/Init.c
